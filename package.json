@@ -1,0 +1,21 @@
+{
+  "name": "feed-bootstrap",
+  "version": "1.0.0",
+  "description": "A loader for feed-printer",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rssk/feed-bootstrap.git"
+  },
+  "author": "Ross Kelly",
+  "license": "GPL-3.0+",
+  "bugs": {
+    "url": "https://github.com/rssk/feed-bootstrap/issues"
+  },
+  "homepage": "https://github.com/rssk/feed-bootstrap#readme",
+  "dependencies": {
+    "node-wifi": "^2.0.12",
+    "pigpio": "^2.0.1"
+  }
+}
