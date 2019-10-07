@@ -17,5 +17,7 @@
   "dependencies": {
     "node-wifi": "^2.0.12",
     "pigpio": "^2.0.1"
+  },
+  "scripts": {
   }
 }
