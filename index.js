@@ -1,7 +1,7 @@
 //const npm = require('npm');
 // const pigpio = require('pigpio');
-// const clarify = require('clarify');
-// const trace = require('trace');
+const clarify = require('clarify');
+const trace = require('trace');
 const wifi = require('node-wifi');
 const readFileSync = require('fs').readFileSync;
 const writeFileSync = require('fs').writeFileSync;
@@ -38,8 +38,13 @@ new Promise(function(resolve, reject) {
   });
 }).then((stuff) => {
   // ethernet too?
-  const wifiSettings = JSON.parse(readFileSync(join(`/mnt/pnt`, `wifi.json`)));
-  if (wifiSettings.ethernet !== true) {
+  let wifiSettings
+  try {
+   wifiSettings = JSON.parse(readFileSync(join(`/mnt/pnt`, `wifi.json`)));
+  } catch (e) {
+    wifiSettings = undefined;
+  }
+  if (wifiSettings) {
     return wifi.connect({ ssid: wifiSettings.ssid, password: wifiSettings.password });
   }
 }).then(() => {
