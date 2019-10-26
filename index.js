@@ -1,79 +1,122 @@
-//const npm = require('npm');
-// const pigpio = require('pigpio');
+const npm = require('npm');
+const Gpio = require('pigpio').Gpio;
 const clarify = require('clarify');
 const trace = require('trace');
 const wifi = require('node-wifi');
 const readFileSync = require('fs').readFileSync;
 const writeFileSync = require('fs').writeFileSync;
 const join = require('path').join;
+debugger;
+
+const errorled = new Gpio(20, {mode: Gpio.OUTPUT});
+const statusled = new Gpio(21, {mode: Gpio.OUTPUT});
+
+const logError = (error) => {
+  try {
+    writeFileSync(join('/media/pi/BB', 'errors.txt'), error, { flag: 'a' });
+    console.error(error);
+  } catch (e) {
+    console.error(`Failed to write out error to drive: ${e}`);
+    writeFileSync(join('/home/pi', 'errors.txt'), error, { flag: 'a' });
+  }
+};
 
 process.on('uncaughtException', (error) => {
   logError(error);
 });
 
-const logError = (error) => {
-  try {
-    writeFileSync(error, join(`/mnt/pnt`, `errors.txt`), 'w+');
-    console.error(error);
-  } catch (e) {
-    console.error(`Failed to write out error to drive: ${e}`);
-    writeFileSync(error, join(`~/`, `errors.txt`), 'w+');
+let currentInterval;
+const setLightState = (led, state) => {
+  const flash = (speed) => {
+    let dutyCycle = 0;
+    if (currentInterval) clearInterval(currentInterval);
+    currentInterval = setInterval(() => {
+      led.pwmWrite(dutyCycle);
+
+      if (dutyCycle === 0) {
+        dutyCycle = 255;
+      } else {
+        dutyCycle = 0
+      }
+    }, speed);
+  }
+
+  switch(state) {
+    case 'slowFlash':
+      flash(500)
+    case 'fastflash':
+      flash(200)
+    case 'on':
+      if (currentInterval) clearInterval(currentInterval);
+      led.pwmWrite(255);
+    case 'off':
+      if (currentInterval) clearInterval(currentInterval);
+      led.pwmWrite(0);
+    default:
   }
 };
-const setLightState = (state) => {
-	pigpio(state); // flashing green
+
+setLightState(statusled, 'slowFlash');
+debugger
+let settings;
+let prom = Promise.resolve();
+settings = JSON.parse(readFileSync(join('/media/pi/BB', 'settings.json')));
+if (settings.wifi) {
+  wifi.init({ iface: 'wlan0' });
+  debugger;
+  prom = wifi.disconnect()
+    .catch(() => {})
+    .then(() => wifi.deleteConnection({ ssid: settings.wifi.ssid }))
+    .catch(() => {})
+    .then(() => wifi.scan())
+    .then((networks) => {
+    debugger;
+  }).then(() => wifi.connect({ ssid: settings.wifi.ssid, password: settings.wifi.password }));
 }
-
-
-new Promise(function(resolve, reject) {
-  setLightState('green', 'slowFlash');
-  npm.load({ 'global': true }, function (err) {
-    if (err) return reject(err);
-
-    npm.commands.install(['feed-printer'], function (err, data) {
+prom.then((stuff) => {
+  return new Promise(function (resolve, reject) {
+    setLightState(statusled, 'slowFlash');
+    debugger;
+    npm.load({ loaded: false }, function (err) {
       if (err) return reject(err);
-      const feedPrinter = require('feed-printer');
-      resolve(data);
+
+      npm.commands.install(['feed-printer'], function (err, data) {
+        debugger;
+        if (err) return reject(err);
+        // const feedPrinter = require('feed-printer');
+        resolve(data);
+      });
     });
   });
-}).then((stuff) => {
-  // ethernet too?
-  let wifiSettings
-  try {
-   wifiSettings = JSON.parse(readFileSync(join(`/mnt/pnt`, `wifi.json`)));
-  } catch (e) {
-    wifiSettings = undefined;
-  }
-  if (wifiSettings) {
-    return wifi.connect({ ssid: wifiSettings.ssid, password: wifiSettings.password });
-  }
 }).then(() => {
-  setLightState('green', 'fastFlash');
+  debugger;
+  setLightState(statusled, 'fastFlash');
   // start feed-printer
   let retries = 1;
   let execTime = Date.now();
   const keepItFed = () => {
-    setLightState('green', 'steady');
+    setLightState(statusled, 'on');
     if (retries && retries < 500) {
       feedPrinter.start()
-      .catch((error) => {
-        if (execTime - Date.now() < 500) {
-          retries = null;
-        } else {
-          execTime = Date.now();
-          retries += 1;
-        }
-        log(error);
-        keepItFed();
-      });
+        .catch((error) => {
+          if (execTime - Date.now() < 500) {
+            retries = null;
+          } else {
+            execTime = Date.now();
+            retries += 1;
+          }
+          log(error);
+          keepItFed();
+        });
     } else {
-      setLightState('red', 'slowFlash');
-      setLightState('green', 'off');
+      setLightState(errorled, 'slowFlash');
+      setLightState(statusled, 'off');
     }
   };
   keepItFed();
 }).catch((error) => {
-  setLightState('red', 'slowFlash');
-  setLightState('green', 'off');
+  debugger;
+  setLightState(errorled, 'slowFlash');
+  setLightState(statusled, 'off');
   logError(error);
-})
+});

@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "A loader for feed-printer",
   "main": "index.js",
-  "scripts": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rssk/feed-bootstrap.git"
@@ -15,9 +14,11 @@
   },
   "homepage": "https://github.com/rssk/feed-bootstrap#readme",
   "dependencies": {
+    "clarify": "^2.1.0",
+    "feed-printer": "^1.0.0",
     "node-wifi": "^2.0.12",
-    "pigpio": "^2.0.1"
-  },
-  "scripts": {
+    "npm": "^6.12.0",
+    "pigpio": "^2.0.1",
+    "trace": "^3.1.1"
   }
 }
