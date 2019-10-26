@@ -1,15 +1,14 @@
-const npm = require('npm');
+require('clarify');
+require('trace');
 const Gpio = require('pigpio').Gpio;
-const clarify = require('clarify');
-const trace = require('trace');
 const wifi = require('node-wifi');
 const readFileSync = require('fs').readFileSync;
 const writeFileSync = require('fs').writeFileSync;
 const join = require('path').join;
-debugger;
+const { spawn } = require('child_process');
 
-const errorled = new Gpio(20, {mode: Gpio.OUTPUT});
-const statusled = new Gpio(21, {mode: Gpio.OUTPUT});
+const errorled = new Gpio(20, { mode: Gpio.OUTPUT });
+const statusled = new Gpio(21, { mode: Gpio.OUTPUT });
 
 const logError = (error) => {
   try {
@@ -36,60 +35,60 @@ const setLightState = (led, state) => {
       if (dutyCycle === 0) {
         dutyCycle = 255;
       } else {
-        dutyCycle = 0
+        dutyCycle = 0;
       }
     }, speed);
-  }
+  };
 
-  switch(state) {
+  switch (state) {
     case 'slowFlash':
-      flash(500)
+      flash(500);
+      break;
     case 'fastflash':
-      flash(200)
+      flash(200);
+      break;
     case 'on':
       if (currentInterval) clearInterval(currentInterval);
       led.pwmWrite(255);
+      break;
     case 'off':
       if (currentInterval) clearInterval(currentInterval);
       led.pwmWrite(0);
+      break;
     default:
   }
 };
 
 setLightState(statusled, 'slowFlash');
-debugger
-let settings;
 let prom = Promise.resolve();
-settings = JSON.parse(readFileSync(join('/media/pi/BB', 'settings.json')));
+const settings = JSON.parse(readFileSync(join('/media/pi/BB', 'settings.json')));
 if (settings.wifi) {
   wifi.init({ iface: 'wlan0' });
-  debugger;
   prom = wifi.disconnect()
     .catch(() => {})
     .then(() => wifi.deleteConnection({ ssid: settings.wifi.ssid }))
     .catch(() => {})
     .then(() => wifi.scan())
-    .then((networks) => {
-    debugger;
-  }).then(() => wifi.connect({ ssid: settings.wifi.ssid, password: settings.wifi.password }));
+    .then(() => wifi.connect({ ssid: settings.wifi.ssid, password: settings.wifi.password }));
 }
 prom.then((stuff) => {
+  setLightState(statusled, 'slowFlash');
   return new Promise(function (resolve, reject) {
-    setLightState(statusled, 'slowFlash');
-    debugger;
-    npm.load({ loaded: false }, function (err) {
-      if (err) return reject(err);
+    const npmu = spawn('npm', ['--unsafe-perm', 'update']);
+    npmu.stdout.on('data', (data) => {
+      console.log(`${data}`);
+    });
+    let errMsg = '';
+    npmu.stderr.on('data', (data) => {
+      errMsg += data;
+    });
 
-      npm.commands.install(['feed-printer'], function (err, data) {
-        debugger;
-        if (err) return reject(err);
-        // const feedPrinter = require('feed-printer');
-        resolve(data);
-      });
+    npmu.on('close', (code) => {
+      if (code > 0) return reject(new Error(`Self update failed with code ${code}: ${errMsg}`));
+      resolve();
     });
   });
 }).then(() => {
-  debugger;
   setLightState(statusled, 'fastFlash');
   // start feed-printer
   let retries = 1;
@@ -105,7 +104,7 @@ prom.then((stuff) => {
             execTime = Date.now();
             retries += 1;
           }
-          log(error);
+          logError(error);
           keepItFed();
         });
     } else {
@@ -115,7 +114,6 @@ prom.then((stuff) => {
   };
   keepItFed();
 }).catch((error) => {
-  debugger;
   setLightState(errorled, 'slowFlash');
   setLightState(statusled, 'off');
   logError(error);
