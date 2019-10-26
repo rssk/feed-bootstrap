@@ -24,12 +24,12 @@ process.on('uncaughtException', (error) => {
   logError(error);
 });
 
-let currentInterval;
+const currentInterval = {};
 const setLightState = (led, state) => {
   const flash = (speed) => {
     let dutyCycle = 0;
-    if (currentInterval) clearInterval(currentInterval);
-    currentInterval = setInterval(() => {
+    if (currentInterval[led]) clearInterval(currentInterval[led]);
+    currentInterval[led] = setInterval(() => {
       led.pwmWrite(dutyCycle);
 
       if (dutyCycle === 0) {
