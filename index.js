@@ -6,6 +6,7 @@ const readFileSync = require('fs').readFileSync;
 const writeFileSync = require('fs').writeFileSync;
 const join = require('path').join;
 const { spawn } = require('child_process');
+const feedPrinter = require('feed-printer');
 
 const errorled = new Gpio(20, { mode: Gpio.OUTPUT });
 const statusled = new Gpio(21, { mode: Gpio.OUTPUT });
@@ -44,7 +45,7 @@ const setLightState = (led, state) => {
     case 'slowFlash':
       flash(500);
       break;
-    case 'fastflash':
+    case 'fastFlash':
       flash(200);
       break;
     case 'on':
@@ -72,7 +73,7 @@ if (settings.wifi) {
     .then(() => wifi.connect({ ssid: settings.wifi.ssid, password: settings.wifi.password }));
 }
 prom.then((stuff) => {
-  setLightState(statusled, 'slowFlash');
+  setLightState(statusled, 'fastFlash');
   return new Promise(function (resolve, reject) {
     const npmu = spawn('npm', ['--unsafe-perm', 'update']);
     npmu.stdout.on('data', (data) => {
@@ -89,7 +90,6 @@ prom.then((stuff) => {
     });
   });
 }).then(() => {
-  setLightState(statusled, 'fastFlash');
   // start feed-printer
   let retries = 1;
   let execTime = Date.now();
