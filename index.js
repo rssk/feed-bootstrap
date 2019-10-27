@@ -6,7 +6,6 @@ const readFileSync = require('fs').readFileSync;
 const writeFileSync = require('fs').writeFileSync;
 const join = require('path').join;
 const { spawn } = require('child_process');
-const feedPrinter = require('feed-printer');
 
 const errorled = new Gpio(20, { mode: Gpio.OUTPUT });
 const statusled = new Gpio(21, { mode: Gpio.OUTPUT });
@@ -22,6 +21,8 @@ const logError = (error) => {
 };
 
 process.on('uncaughtException', (error) => {
+  setLightState(errorled, 'slowFlash');
+  setLightState(statusled, 'off');
   logError(error);
 });
 
@@ -59,7 +60,7 @@ const setLightState = (led, state) => {
     default:
   }
 };
-
+let feedPrinter;
 setLightState(statusled, 'slowFlash');
 let prom = Promise.resolve();
 const settings = JSON.parse(readFileSync(join('/media/pi/BB', 'settings.json')));
@@ -90,13 +91,15 @@ prom.then((stuff) => {
     });
   });
 }).then(() => {
+  feedPrinter = require('feed-printer');
+}).then(() => {
   // start feed-printer
   let retries = 1;
   let execTime = Date.now();
   const keepItFed = () => {
     setLightState(statusled, 'on');
     if (retries && retries < 500) {
-      feedPrinter.start()
+      feedPrinter.start(settings.dryRun)
         .catch((error) => {
           if (execTime - Date.now() < 500) {
             retries = null;
