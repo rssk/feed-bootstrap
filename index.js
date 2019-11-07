@@ -9,10 +9,10 @@ const { spawn } = require('child_process');
 
 const errorled = new Gpio(20, { mode: Gpio.OUTPUT });
 const statusled = new Gpio(21, { mode: Gpio.OUTPUT });
-
+const stickPath = '/media/pi/BB';
 const logError = (error) => {
   try {
-    writeFileSync(join('/media/pi/BB', 'errors.txt'), error, { flag: 'a' });
+    writeFileSync(join(stickPath, 'errors.txt'), error, { flag: 'a' });
     console.error(error);
   } catch (e) {
     console.error(`Failed to write out error to drive: ${e}`);
@@ -63,7 +63,7 @@ const setLightState = (led, state) => {
 let feedPrinter;
 setLightState(statusled, 'slowFlash');
 let prom = Promise.resolve();
-const settings = JSON.parse(readFileSync(join('/media/pi/BB', 'settings.json')));
+const settings = JSON.parse(readFileSync(join(stickPath, 'settings.json')));
 if (settings.wifi) {
   wifi.init({ iface: 'wlan0' });
   prom = wifi.disconnect()
@@ -98,8 +98,10 @@ prom.then((stuff) => {
   let execTime = Date.now();
   const keepItFed = () => {
     setLightState(statusled, 'on');
+    feedPrinter.saveEmitter.on('saving', setLightState.bind(null, errorled, 'on'));
+    feedPrinter.saveEmitter.on('saved', setLightState.bind(null, errorled, 'off'));
     if (retries && retries < 500) {
-      feedPrinter.start(settings.dryRun)
+      feedPrinter.start(join(stickPath, 'articlesdb.json', settings.printing))
         .catch((error) => {
           if (execTime - Date.now() < 500) {
             retries = null;
