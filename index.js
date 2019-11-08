@@ -11,7 +11,7 @@ const rimraf = pify(require('rimraf'));
 
 const errorled = new Gpio(20, { mode: Gpio.OUTPUT });
 const statusled = new Gpio(21, { mode: Gpio.OUTPUT });
-const usbPath = '/media/pi/pistick';
+const usbPath = '/media/pi/PISTICK';
 const logError = (error) => {
   try {
     writeFileSync(join(usbPath, 'errors.txt'), error, { flag: 'a' });
