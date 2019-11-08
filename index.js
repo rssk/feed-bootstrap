@@ -11,10 +11,10 @@ const rimraf = pify(require('rimraf'));
 
 const errorled = new Gpio(20, { mode: Gpio.OUTPUT });
 const statusled = new Gpio(21, { mode: Gpio.OUTPUT });
-const stickPath = '/media/pi/BB';
+const usbPath = '/media/pi/pistick';
 const logError = (error) => {
   try {
-    writeFileSync(join(stickPath, 'errors.txt'), error, { flag: 'a' });
+    writeFileSync(join(usbPath, 'errors.txt'), error, { flag: 'a' });
     console.error(error);
   } catch (e) {
     console.error(`Failed to write out error to drive: ${e}`);
@@ -112,7 +112,7 @@ prom.then((stuff) => {
     feedPrinter.saveEmitter.on('saving', setLightState.bind(null, errorled, 'on'));
     feedPrinter.saveEmitter.on('saved', setLightState.bind(null, errorled, 'off'));
     if (retries && retries < 500) {
-      feedPrinter.start(join(stickPath, 'articlesdb.json', settings.printer))
+      feedPrinter.start(join(usbPath, 'articlesdb.json'), settings.printer)
         .catch((error) => {
           if (execTime - Date.now() < 500) {
             retries = null;
