@@ -1,0 +1,10 @@
+[Unit]
+Description=A google feed to thermal printer, printer
+After=multi-user.target
+
+[Service]
+Type=idle
+ExecStart=/usr/bin/node /root/feed-bootstrap/index.js
+
+[Install]
+WantedBy=multi-user.target
