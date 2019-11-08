@@ -81,7 +81,8 @@ prom.then((stuff) => {
   setLightState(statusled, 'fastFlash');
   // root uid update only works on plain install
   // delete hack to make update work
-  return rimraf(join('.', 'node_modules', 'feed-printer'))
+  return rimraf(join('node_modules', 'feed-printer'))
+    .then(() => rimraf(join('package-lock.json')))
     .then(() => {
       return new Promise(function (resolve, reject) {
         const npmu = spawn('npm', ['--unsafe-perm', 'install']);
