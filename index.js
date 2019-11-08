@@ -52,11 +52,11 @@ const setLightState = (led, state) => {
       flash(200);
       break;
     case 'on':
-      if (currentInterval) clearInterval(currentInterval);
+      if (currentInterval[led]) clearInterval(currentInterval[led]);
       led.pwmWrite(255);
       break;
     case 'off':
-      if (currentInterval) clearInterval(currentInterval);
+      if (currentInterval[led]) clearInterval(currentInterval[led]);
       led.pwmWrite(0);
       break;
     default:
