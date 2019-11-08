@@ -112,7 +112,7 @@ prom.then((stuff) => {
     feedPrinter.saveEmitter.on('saving', setLightState.bind(null, errorled, 'on'));
     feedPrinter.saveEmitter.on('saved', setLightState.bind(null, errorled, 'off'));
     if (retries && retries < 500) {
-      feedPrinter.start(join(stickPath, 'articlesdb.json', settings.printing))
+      feedPrinter.start(join(stickPath, 'articlesdb.json', settings.printer))
         .catch((error) => {
           if (execTime - Date.now() < 500) {
             retries = null;
