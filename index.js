@@ -6,7 +6,8 @@ const readFileSync = require('fs').readFileSync;
 const writeFileSync = require('fs').writeFileSync;
 const join = require('path').join;
 const { spawn } = require('child_process');
-const rimraf = require('rimraf');
+const pify = require('util').promisify;
+const rimraf = pify(require('rimraf'));
 
 const errorled = new Gpio(20, { mode: Gpio.OUTPUT });
 const statusled = new Gpio(21, { mode: Gpio.OUTPUT });
