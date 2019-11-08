@@ -67,6 +67,7 @@ setLightState(statusled, 'slowFlash');
 let prom = Promise.resolve();
 const settings = JSON.parse(readFileSync(join(stickPath, 'settings.json')));
 if (settings.wifi) {
+  console.log('Connecting to wifi');
   wifi.init({ iface: 'wlan0' });
   prom = wifi.disconnect()
     .catch(() => {})
@@ -76,6 +77,7 @@ if (settings.wifi) {
     .then(() => wifi.connect({ ssid: settings.wifi.ssid, password: settings.wifi.password }));
 }
 prom.then((stuff) => {
+  console.log('Updating');
   setLightState(statusled, 'fastFlash');
   // root uid update only works on plain install
   // delete hack to make update work
@@ -100,6 +102,7 @@ prom.then((stuff) => {
 }).then(() => {
   feedPrinter = require('feed-printer');
 }).then(() => {
+  console.log('Starting');
   // start feed-printer
   let retries = 1;
   let execTime = Date.now();
