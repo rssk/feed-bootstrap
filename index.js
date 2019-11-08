@@ -65,7 +65,7 @@ const setLightState = (led, state) => {
 let feedPrinter;
 setLightState(statusled, 'slowFlash');
 let prom = Promise.resolve();
-const settings = JSON.parse(readFileSync(join(stickPath, 'settings.json')));
+const settings = JSON.parse(readFileSync(join(usbPath, 'settings.json')));
 if (settings.wifi) {
   console.log('Connecting to wifi');
   wifi.init({ iface: 'wlan0' });
