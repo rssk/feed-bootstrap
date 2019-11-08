@@ -6,6 +6,7 @@ const readFileSync = require('fs').readFileSync;
 const writeFileSync = require('fs').writeFileSync;
 const join = require('path').join;
 const { spawn } = require('child_process');
+const rimraf = require('rimraf');
 
 const errorled = new Gpio(20, { mode: Gpio.OUTPUT });
 const statusled = new Gpio(21, { mode: Gpio.OUTPUT });
@@ -75,21 +76,26 @@ if (settings.wifi) {
 }
 prom.then((stuff) => {
   setLightState(statusled, 'fastFlash');
-  return new Promise(function (resolve, reject) {
-    const npmu = spawn('npm', ['--unsafe-perm', 'update']);
-    npmu.stdout.on('data', (data) => {
-      console.log(`${data}`);
-    });
-    let errMsg = '';
-    npmu.stderr.on('data', (data) => {
-      errMsg += data;
-    });
+  // root uid update only works on plain install
+  // delete hack to make update work
+  return rimraf(join('.', 'node_modules', 'feed-printer'))
+    .then(() => {
+      return new Promise(function (resolve, reject) {
+        const npmu = spawn('npm', ['--unsafe-perm', 'install']);
+        npmu.stdout.on('data', (data) => {
+          console.log(`${data}`);
+        });
+        let errMsg = '';
+        npmu.stderr.on('data', (data) => {
+          errMsg += data;
+        });
 
-    npmu.on('close', (code) => {
-      if (code > 0) return reject(new Error(`Self update failed with code ${code}: ${errMsg}`));
-      resolve();
+        npmu.on('close', (code) => {
+          if (code > 0) return reject(new Error(`Self update failed with code ${code}: ${errMsg}`));
+          resolve();
+        });
+      });
     });
-  });
 }).then(() => {
   feedPrinter = require('feed-printer');
 }).then(() => {
