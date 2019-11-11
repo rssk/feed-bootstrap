@@ -13,6 +13,10 @@ const exitHook = require('exit-hook');
 const errorled = new Gpio(20, { mode: Gpio.OUTPUT });
 const statusled = new Gpio(21, { mode: Gpio.OUTPUT });
 
+// init leds
+statusled.pwmWrite(0);
+errorled.pwmWrite(0);
+
 exitHook(() => {
   statusled.pwmWrite(0);
   errorled.pwmWrite(255);
