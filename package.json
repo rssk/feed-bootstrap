@@ -15,6 +15,7 @@
   "homepage": "https://github.com/rssk/feed-bootstrap#readme",
   "dependencies": {
     "clarify": "^2.1.0",
+    "exit-hook": "^2.2.0",
     "feed-printer": "*",
     "node-wifi": "^2.0.12",
     "pigpio": "^2.0.1",

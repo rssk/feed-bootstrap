@@ -8,9 +8,16 @@ const { spawn } = require('child_process');
 const pify = require('util').promisify;
 const rimraf = pify(require('rimraf'));
 const promiseRetry = require('promise-retry');
+const exitHook = require('exit-hook');
 
 const errorled = new Gpio(20, { mode: Gpio.OUTPUT });
 const statusled = new Gpio(21, { mode: Gpio.OUTPUT });
+
+exitHook(() => {
+  statusled.pwmWrite(0);
+  errorled.pwmWrite(255);
+});
+
 const usbPath = '/media/pi/PISTICK';
 const logError = (error) => {
   try {
