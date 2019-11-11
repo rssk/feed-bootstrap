@@ -113,12 +113,12 @@ prom.then((stuff) => {
 }).then(() => {
   feedPrinter = require('feed-printer');
 }).then(() => {
+  setLightState(statusled, 'on');
   console.log('Starting');
   // start feed-printer
   let retries = 1;
   let execTime = Date.now();
   const keepItFed = () => {
-    setLightState(statusled, 'on');
     feedPrinter.saveEmitter.on('saving', setLightState.bind(null, errorled, 'on'));
     feedPrinter.saveEmitter.on('saved', setLightState.bind(null, errorled, 'off'));
     if (retries && retries < 500) {
