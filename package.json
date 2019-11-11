@@ -18,6 +18,7 @@
     "feed-printer": "*",
     "node-wifi": "^2.0.12",
     "pigpio": "^2.0.1",
+    "promise-retry": "^1.1.1",
     "rimraf": "^3.0.0",
     "trace": "^3.1.1"
   },

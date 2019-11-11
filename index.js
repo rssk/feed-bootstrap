@@ -1,13 +1,13 @@
 require('clarify');
 require('trace');
 const Gpio = require('pigpio').Gpio;
-const wifi = require('node-wifi');
 const readFileSync = require('fs').readFileSync;
 const writeFileSync = require('fs').writeFileSync;
 const join = require('path').join;
 const { spawn } = require('child_process');
 const pify = require('util').promisify;
 const rimraf = pify(require('rimraf'));
+const promiseRetry = require('promise-retry');
 
 const errorled = new Gpio(20, { mode: Gpio.OUTPUT });
 const statusled = new Gpio(21, { mode: Gpio.OUTPUT });
@@ -68,13 +68,23 @@ let prom = Promise.resolve();
 const settings = JSON.parse(readFileSync(join(usbPath, 'settings.json')));
 if (settings.wifi) {
   console.log('Connecting to wifi');
-  wifi.init({ iface: 'wlan0' });
-  prom = wifi.disconnect()
-    .catch(() => {})
-    .then(() => wifi.deleteConnection({ ssid: settings.wifi.ssid }))
-    .catch(() => {})
-    .then(() => wifi.scan())
-    .then(() => wifi.connect({ ssid: settings.wifi.ssid, password: settings.wifi.password }));
+  prom = promiseRetry((retry) => {
+    return new Promise((resolve, reject) => {
+      const nmcli = spawn('nmcli', ['-w', '90', 'device', 'wifi', 'connect', settings.wifi.ssid, 'password', settings.wifi.password]);
+      nmcli.stdout.on('data', (data) => {
+        console.log(`${data}`);
+      });
+      let errMsg = '';
+      nmcli.stderr.on('data', (data) => {
+        errMsg += data;
+      });
+
+      nmcli.on('close', (code) => {
+        if (code > 0) return reject(new Error(`wifi error ${code}: ${errMsg}`));
+        resolve();
+      });
+    }).catch((e) => retry(e));
+  });
 }
 prom.then((stuff) => {
   console.log('Updating');
